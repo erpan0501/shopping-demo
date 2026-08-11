@@ -14,8 +14,7 @@
 **/node_modules/
 **/dist/
 
-# Local analysis cache
-code-atlas/
+# Local working folders
 .git-backups/
 
 # Editor and OS files
