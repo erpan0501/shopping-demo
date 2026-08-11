@@ -1,0 +1,5 @@
+export {default as DeleteBtn} from './DeleteBtn'
+export {default as WangEditor} from './WangEditor'
+export {default as Dialog} from './Dialog'
+export {default as Upload} from './Upload'
+export {default as Table} from './Table'

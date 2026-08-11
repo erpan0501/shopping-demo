@@ -1,0 +1,50 @@
+package com.localdemo.shopping_custcare_service;
+
+import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.InMemoryChatMemory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.Bean;
+
+@EnableDiscoveryClient
+@EnableDubbo
+@RefreshScope
+@SpringBootApplication
+@MapperScan("com.localdemo.shopping_custcare_service.mapper")
+public class ShoppingCustcareServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ShoppingCustcareServiceApplication.class, args);
+    }
+
+    /**
+     * 对话记忆
+     */
+    @Bean
+    public ChatMemory chatMemory() {
+        return new InMemoryChatMemory();
+    }
+
+    /**
+     * AI聊天客户端
+     * @param builder
+     * @return
+     */
+    @Bean
+    public ChatClient chatClient(ChatClient.Builder builder,ChatMemory chatMemory) {
+        return builder
+                // 函数调用
+                .defaultFunctions("getOrderQueryService","getGoodsQueryService")
+                // 对话记忆
+                .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
+                .build();
+    }
+
+
+}

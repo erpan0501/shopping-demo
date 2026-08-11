@@ -1,0 +1,24 @@
+# Local configuration and runtime files
+.env
+.env.*
+!.env.example
+.run/
+*.log
+
+# Java build output
+**/target/
+*.class
+*.jar
+
+# Frontend artifacts
+**/node_modules/
+**/dist/
+
+# Local analysis cache
+code-atlas/
+.git-backups/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
