@@ -1,0 +1,109 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-travel}
+      MYSQL_USER: ${MYSQL_USER:-shopping_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 .env.compose 中设置 MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env.compose 中设置 MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动时执行此目录中的 SQL。请放入从本地商城导出的完整结构和测试数据。
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  redis:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:v1.17.0
+    volumes:
+      - qdrant-data:/qdrant/storage
+    ports:
+      - "127.0.0.1:${QDRANT_HOST_PORT:-6333}:6333"
+
+  java:
+    build:
+      context: ${JAVA_PROJECT_DIR:-../../../Documents/java项目/代码/shopping-local}
+      dockerfile: Dockerfile
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-travel}
+      DB_USERNAME: ${MYSQL_USER:-shopping_app}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?请在 .env.compose 中设置 MYSQL_PASSWORD}
+      SHOPPING_PERMIT_ALL: "true"
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${JAVA_HOST_PORT:-8080}:8080"
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      JAVA_BASE_URL: http://java:8080
+      JAVA_CIRCUIT_FAILURE_THRESHOLD: 5
+      JAVA_CIRCUIT_RECOVERY_SECONDS: 30
+      SESSION_BACKEND: redis
+      REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT_BACKEND: redis
+      RATE_LIMIT_REDIS_KEY_PREFIX: mall-customer-service:rate-limit
+      ALLOW_TEST_USER_ID: "false"
+      FAQ_RETRIEVAL_BACKEND: ${FAQ_RETRIEVAL_BACKEND:-java}
+      FAQ_QDRANT_URL: ${FAQ_QDRANT_URL:-http://qdrant:6333}
+      FAQ_QDRANT_COLLECTION: ${FAQ_QDRANT_COLLECTION:-mall_faq}
+      FAQ_VECTOR_SCORE_THRESHOLD: ${FAQ_VECTOR_SCORE_THRESHOLD:-0.62}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-v4}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?请在 .env.compose 中设置 DEEPSEEK_API_KEY}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
+      STAFF_API_KEY: ${STAFF_API_KEY:?请在 .env.compose 中设置 STAFF_API_KEY}
+      AUDIT_DB_PATH: /data/customer_service.db
+      HANDOFF_DB_PATH: /data/customer_service.db
+      TZ: Asia/Shanghai
+    depends_on:
+      java:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    ports:
+      - "${AGENT_HOST_PORT:-8000}:8000"
+    volumes:
+      - agent-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  mysql-data:
+  redis-data:
+  agent-data:
+  qdrant-data:

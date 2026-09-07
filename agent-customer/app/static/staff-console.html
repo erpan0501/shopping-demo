@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>商城客服工作台</title>
+    <link rel="stylesheet" href="/internal/console/assets/staff-console.css">
+    <script defer src="/internal/console/assets/staff-console.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">MALL CUSTOMER SERVICE</p>
+          <h1>客服工作台</h1>
+          <p class="subtle">处理 AI 转接工单并关注服务运行情况。</p>
+        </div>
+        <button id="disconnect-button" class="secondary" type="button" hidden>断开</button>
+      </header>
+
+      <section id="login-card" class="card login-card" aria-labelledby="login-title">
+        <h2 id="login-title">进入工作台</h2>
+        <p>输入内部客服访问密钥。密钥只保存在当前页面内存中，刷新页面后会自动清除。</p>
+        <form id="login-form">
+          <label for="staff-key">访问密钥</label>
+          <div class="login-row">
+            <input id="staff-key" type="password" autocomplete="off" required placeholder="输入 X-Staff-Key">
+            <button type="submit">进入</button>
+          </div>
+        </form>
+        <p id="login-error" class="notice error" role="alert" hidden></p>
+      </section>
+
+      <section id="workspace" hidden>
+        <section class="metric-grid" aria-label="近一小时服务概况">
+          <article class="metric card"><span>请求量</span><strong id="metric-total">—</strong></article>
+          <article class="metric card"><span>完成</span><strong id="metric-completed">—</strong></article>
+          <article class="metric card"><span>失败</span><strong id="metric-failed">—</strong></article>
+          <article class="metric card"><span>限流</span><strong id="metric-rate-limited">—</strong></article>
+        </section>
+
+        <section class="card tickets-card">
+          <div class="section-header">
+            <div>
+              <h2>人工工单</h2>
+              <p id="ticket-caption">加载中…</p>
+            </div>
+            <div class="controls">
+              <label class="select-label" for="ticket-status">状态</label>
+              <select id="ticket-status">
+                <option value="waiting_human">待人工处理</option>
+                <option value="processing">处理中</option>
+                <option value="resolved">已解决</option>
+              </select>
+              <button id="refresh-button" class="secondary" type="button">刷新</button>
+            </div>
+          </div>
+          <p id="workspace-error" class="notice error" role="alert" hidden></p>
+          <div id="ticket-list" class="ticket-list" aria-live="polite"></div>
+        </section>
+
+        <section id="ticket-detail" class="card detail-card" hidden>
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">工单详情</p>
+              <h2 id="detail-ticket-id">—</h2>
+            </div>
+            <span id="detail-status" class="badge">—</span>
+          </div>
+          <dl class="metadata">
+            <div><dt>用户</dt><dd id="detail-user">—</dd></div>
+            <div><dt>创建时间</dt><dd id="detail-created">—</dd></div>
+            <div><dt>当前处理人</dt><dd id="detail-handler">未分配</dd></div>
+          </dl>
+          <h3>会话记录</h3>
+          <div id="conversation" class="conversation"></div>
+          <form id="ticket-update-form" class="update-form">
+            <label for="handled-by">处理人</label>
+            <input id="handled-by" maxlength="50" required placeholder="填写当前客服姓名或工号">
+            <div class="action-row">
+              <button type="submit" data-status="processing" class="secondary">标记处理中</button>
+              <button type="submit" data-status="resolved">标记已解决</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

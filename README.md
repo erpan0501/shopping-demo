@@ -74,3 +74,26 @@ mvn -DskipTests package
 ```bash
 mvn -pl shopping_demo spring-boot:run
 ```
+
+## 智能客服 Agent
+
+仓库中的 [agent-customer/](./agent-customer/) 是独立的商城智能客服服务，提供 FAQ、订单与物流查询、售后多轮、人工转接、工单工作台、限流和审计能力。
+
+| 模块 | 入口 | 说明 |
+| --- | --- | --- |
+| 客服 Agent | `agent-customer/` | FastAPI + LangGraph，默认端口 `8000` |
+| Chat API | `POST /chat` | FAQ、订单、物流、售后和转人工 |
+| 内部工作台 | `/internal/console` | 人工工单和运行概览 |
+| 评测集 | `agent-customer/eval/` | 200 条客服路由用例 |
+
+Agent 默认需要一个兼容的 Java 商城服务提供 `/faq`、`/user/orders` 和 JWT 用户身份接口，默认地址为 `http://127.0.0.1:8080`。当前根目录的 `shopping_demo` 是 `8090` 端口的展示后端，接口契约不同；如需运行客服完整链路，请使用兼容的 Java 商城本地版，详细步骤见 [agent-customer/README.md](./agent-customer/README.md)。
+
+```bash
+cd agent-customer
+cp .env.example .env
+# 填写 DEEPSEEK_API_KEY 和 STAFF_API_KEY
+uv sync
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir app
+```
+
+请勿提交 `.env`、模型密钥、员工密钥、SQLite 工单数据或本地评测报告。
